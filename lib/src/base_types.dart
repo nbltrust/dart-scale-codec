@@ -20,7 +20,9 @@ const scaleTypeReflector = ScaleTypeReflector();
 /// The Capability [subtypeQuantifyCapability] enables all derived classes
 /// to gain same capabilities of BaseType
 @scaleTypeReflector
-abstract class BaseType {}
+abstract class BaseType {
+  dynamic toJson() => {};
+}
 
 ClassMirror getDecoderClass(String class_name) {
   var libraryMirror = scaleTypeReflector.findLibrary('scalecodec.types');
@@ -123,6 +125,9 @@ class u32 extends BaseType {
     val = int.parse(hex.encode(getReaderInstance().read(4)), radix: 16);
   }
   u32.fromData(this.val);
+
+  dynamic toJson() => val;
+  String toString() => val.toString();
 }
 
 class Int8 extends BaseType {
@@ -130,6 +135,9 @@ class Int8 extends BaseType {
   Int8() {
     val = getReaderInstance().read(1)[0];
   }
+
+  dynamic toJson() => val;
+  String toString() => val.toString();
 }
 
 class Int32 extends BaseType {
@@ -137,6 +145,9 @@ class Int32 extends BaseType {
   Int32() {
     val = int.parse(hex.encode(getReaderInstance().read(4)), radix: 16);
   }
+
+  dynamic toJson() => val;
+  String toString() => val.toString();
 }
 
 class Bytes extends BaseType {
@@ -146,6 +157,9 @@ class Bytes extends BaseType {
     var length = ((obj as Compact).obj as u32).val;
     val = getReaderInstance().read(length);
   }
+
+  dynamic toJson() => hex.encode(val);
+  String toString() => toJson();
 }
 
 class Str extends BaseType {
@@ -155,6 +169,9 @@ class Str extends BaseType {
     var length = ((obj as Compact).obj as u32).val;
     val = String.fromCharCodes(getReaderInstance().read(length));
   }
+
+  dynamic toJson() => val;
+  String toString() => val;
 }
 
 class Bool extends BaseType {
@@ -172,14 +189,20 @@ class Bool extends BaseType {
         throw "invalid bool encoding value";
     }
   }
+  dynamic toJson() => val;
+  String toString() => val.toString();
 }
 
 abstract class GeneralStruct extends BaseType {
   Map<String, dynamic> values = {};
-  GeneralStruct() {
+
+  List<Tuple2<String, String>> get params {
     var mirror = scaleTypeReflector.reflect(this);
-    var fields = mirror.type.invokeGetter('fields');
-    for(var f in fields) {
+    return mirror.type.invokeGetter('fields');
+  }
+
+  GeneralStruct() {
+    for(var f in this.params) {
       // print('${mirror.type.simpleName}::${f.item1}');
       values[f.item1] = fromBinary(f.item2);
       // if(f.item1 == 'name') {
@@ -187,6 +210,13 @@ abstract class GeneralStruct extends BaseType {
       // }
     }
   }
+
+  @override
+  noSuchMethod(Invocation invocation) {
+    var param = this.params.firstWhere((param) => Symbol(param.item1) == invocation.memberName);
+    return values[param.item1];
+  }
+  dynamic toJson() => values;
 }
 
 abstract class GeneralEnum extends BaseType {
@@ -201,6 +231,10 @@ abstract class GeneralEnum extends BaseType {
     }
     obj = fromBinary(types[this.index]);
   }
+
+  dynamic toJson() => obj.toJson();
+
+  BaseType get data => obj;
 }
 
 abstract class GeneralTemplate extends BaseType {
@@ -250,6 +284,8 @@ class Compact extends GeneralTemplate {
       }
     }
   }
+
+  dynamic toJson() => obj.toJson();
 }
 
 class Vec extends GeneralTemplate {
@@ -264,6 +300,10 @@ class Vec extends GeneralTemplate {
       objects.add(fromBinary(templateTypes[0]));
     }
   }
+
+  dynamic toJson() => objects.map((i) => i.toJson()).toList();
+
+  BaseType operator[](int idx) => objects[idx];
 }
 
 class Option extends GeneralTemplate {
@@ -280,4 +320,8 @@ class Option extends GeneralTemplate {
       obj = null;
     }
   }
+
+  dynamic toJson() => presents.val ? obj.toJson() : null;
+
+  BaseType get data => presents.val ? obj : null;
 }

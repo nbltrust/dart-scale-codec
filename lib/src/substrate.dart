@@ -12,25 +12,29 @@ class FixedLengthArr extends BaseType {
 
 // (type1, type2, type3,...)
 class AnonymousStruct extends BaseType {
-  List<BaseType> fields;
+  List<BaseType> data;
   AnonymousStruct(List<String> subtypes) {
     for(var s in subtypes) {
-      fields.add(fromBinary(s));
+      data.add(fromBinary(s));
     }
   }
 }
 
 class StorageHasher extends Int8 {
+  static const List<String> hasher_functions = 
+  ['Blake2_128', 'Blake2_256', 'Blake2_128Concat', 'Twox128', 'Twox256', 'Twox64Concat', 'Identity'];
+  dynamic toJson() => hasher_functions[val];
 }
 
 class PlainType extends Bytes {
+  dynamic toJson() => String.fromCharCodes(val);
 }
 
 class MapType extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('hasher', 'StorageHasher'),
-    Tuple2('key', 'Bytes'),
-    Tuple2('value', 'Bytes'),
+    Tuple2('key', 'Str'),
+    Tuple2('value', 'Str'),
     Tuple2('isLinked', 'Bool')
   ];
 }
@@ -38,8 +42,8 @@ class MapType extends GeneralStruct {
 class DoubleMapType extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('hasher', 'StorageHasher'),
-    Tuple2('key1', 'Bytes'),
-    Tuple2('key2', 'Bytes'),
+    Tuple2('key1', 'Str'),
+    Tuple2('key2', 'Str'),
     Tuple2('value', 'Bytes'),
     Tuple2('key2Hasher', 'StorageHasher')
   ];

@@ -31,13 +31,13 @@ class MetadataV7ModuleStorageEntry extends GeneralStruct {
     Tuple2('modifier', 'Int8'),
     Tuple2('function_type', 'MetadataV7ModuleStorageFunctionType'),
     Tuple2('fallback', 'Bytes'),
-    Tuple2('docs', 'Vec<Bytes>')
+    Tuple2('docs', 'Vec<Str>')
   ];
 }
 
 class MetadataV7ModuleStorage extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
-    Tuple2('prefix', 'Bytes'),
+    Tuple2('prefix', 'Str'),
     Tuple2('items', 'Vec<MetadataV7ModuleStorageEntry>')
   ];
 }
@@ -53,31 +53,31 @@ class MetadataModuleCall extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('name', 'Str'),
     Tuple2('args', 'Vec<MetadataModuleCallArgument>'),
-    Tuple2('docs', 'Vec<Bytes>')
+    Tuple2('docs', 'Vec<Str>')
   ];
 }
 
 class MetadataModuleEvent extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('name', 'Str'),
-    Tuple2('args', 'Vec<Bytes>'),
-    Tuple2('docs', 'Vec<Bytes>')
+    Tuple2('args', 'Vec<Str>'),
+    Tuple2('docs', 'Vec<Str>')
   ];
 }
 
 class MetadataV7ModuleConstants extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('name', 'Str'),
-    Tuple2('type', 'Bytes'),
+    Tuple2('type', 'Str'),
     Tuple2('constant_value', 'Bytes'),
-    Tuple2('docs', 'Vec<Bytes>')
+    Tuple2('docs', 'Vec<Str>')
   ];
 }
 
 class MetadataModuleError extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('name', 'Str'),
-    Tuple2('docs', 'Vec<Bytes>')
+    Tuple2('docs', 'Vec<Str>')
   ];
 }
 
