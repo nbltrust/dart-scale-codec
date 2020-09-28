@@ -50,10 +50,8 @@ void createCompactReaderInstance(Uint8List data) {
   compactReaderInstance = BufferedReader(data);
 }
 
-void finishCompactMode() {
-  if(compactReaderInstance == null) {
-    throw "not in compact mode";
-  }
+void finishCompactReader() {
+  assert(compactReaderInstance != null, "not in compact reader mode");
 
   if(!compactReaderInstance.isFinished()) {
     throw "have not read all compact bytes when finish compact mode";
@@ -71,4 +69,30 @@ class BufferedWriter {
   void write(Uint8List data) {
     b.addAll(data);
   }
+
+  Uint8List finalize() {
+    return Uint8List.fromList(b.toList());
+  }
+}
+
+BufferedWriter writerInstance = null;
+BufferedWriter compactWriterInstance = null;
+
+void createWriterInstance() {
+  writerInstance = BufferedWriter();
+}
+
+void createCompactWriterInstance() {
+  compactWriterInstance = BufferedWriter();
+}
+
+Uint8List finishCompactWriter() {
+  assert(compactWriterInstance != null, "not in compact writer mode");
+  var r = compactWriterInstance.finalize();
+  compactWriterInstance = null;
+  return r;
+}
+
+BufferedWriter getWriterInstance() {
+  return compactWriterInstance ?? writerInstance;
 }
