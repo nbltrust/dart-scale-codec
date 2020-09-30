@@ -30,6 +30,7 @@ abstract class ScaleCodecBase {
     if(invocation.isGetter) {
       return getSymbol(symbol);
     } else if(invocation.isSetter) {
+      symbol = symbol.substring(0, symbol.length - 1); // eliminate tailing '='
       setSymbol(symbol, invocation.positionalArguments[0]);
     }
   }
@@ -540,6 +541,8 @@ class Compact extends GeneralTemplate {
 
 class Vec extends GeneralTemplate {
   List<ScaleCodecBase> objects = [];
+  Vec(this.objects);
+
   Vec.fromBinary(List<String> templateTypes) {
     assert(templateTypes.length == 1, "Invalid template type for vec");
     var obj = fromBinary('Compact<u32>');
