@@ -1,0 +1,14 @@
+name: scalecodec_test
+description: Test cases of scalecodec lib
+publish_to: 'none'
+
+dependencies:
+  json_annotation: ^3.0.0
+  convert: ^2.1.1
+  reflectable: any
+  scalecodec:
+    path: ../
+
+dev_dependencies:
+  test: any
+  build_runner: any
