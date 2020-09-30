@@ -9,6 +9,7 @@ dependencies:
   reflectable: ^2.2.5
   tuple: ^1.0.3
   bs58: ^1.0.1
+  cryptography: ^1.4.1
 
 dev_dependencies:
   build_runner: any

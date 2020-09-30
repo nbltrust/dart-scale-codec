@@ -23,20 +23,27 @@ class GenericCall extends GeneralStruct {
     for(dynamic arg in callArgs) {
       argValues[arg.name.val] = fromBinary(arg.type.val);
     }
-    print(argValues);
   }
 
   int get module_index => (values['module_index'] as u8).val;
   int get function_index => (values['function_index'] as u8).val;
 
   GenericCall.fromJson(Map<String, dynamic> s): super.fromJson(s);
+  Map<String, dynamic> toJson() {
+    dynamic meta = RuntimeConfigration().runtimeMetadata;
+    Map<String, dynamic> ret = {};
+    ret['module'] = meta.obj.modules[module_index].name;
+    ret['function'] = meta.obj.modules[module_index].calls.obj[function_index].name;
+    ret['args'] = argValues;
+    return ret;
+  }
 }
 
 class Extrinsics extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('call', 'GenericCall'),
     Tuple2('era', 'Era'),
-    Tuple2('nonce', 'Compact<Index>'),
+    Tuple2('nonce', 'Compact<u32>'),
     Tuple2('tip', 'Compact<Balance>'),
     Tuple2('spec_version', 'u32'),
     Tuple2('transaction_version', 'u32'),

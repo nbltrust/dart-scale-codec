@@ -45,18 +45,27 @@ class Address extends ScaleCodecBase {
 
   Address(this.address);
 
+  // Uint8List get checkEncodedAddress {
+  //   var s = Uint8List.fromList(Uint8List.fromList([0]) + address);
+  //   var checksum = doubleSha256(s).sublist(0, 2);
+  //   print(checksum);
+  //   return Uint8List.fromList(s + checksum);
+  // }
+
   void objToBinary() {
     getWriterInstance().write(address);
   }
 
-  dynamic toJson() => base58.encode(address);
+  dynamic toJson() => base58CheckEncode(address, 0);
+  
+  // base58.encode(checkEncodedAddress);
 
   Address.fromBinary() {
     address = getReaderInstance().read(32);
   }
 
   Address.fromJson(String s) {
-    address = base58.decode(s);
+    address = base58CheckDecode(s);
   }
 }
 
@@ -98,6 +107,9 @@ class Era extends  ScaleCodecBase {
   }
 
   int get phase {
+    if(firstByte == 0) {
+      return null;
+    }
     int factor = max(1, period >> 12);
     int _phase = (encoded >> 4) * factor;
     assert(_phase < period);

@@ -27,14 +27,15 @@ class BufferedReader {
     return _current_position == _data.length;
   }
 
-  Uint8List read(int length) {
+  Uint8List read(int length, [bool disable_overflow = true]) {
     int end = length + _current_position;
-    if(length > 0 && end > _data.length) {
+    assert(length >= 0, "invalid length");
+    if(disable_overflow && end > _data.length) {
       throw "read overflow";
     }
-
+    end = end < _data.length? end : _data.length;
     int begin = _current_position;
-    _current_position += length;
+    _current_position = end;
     return _data.sublist(begin, end);
   }
 }

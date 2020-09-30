@@ -6,8 +6,7 @@ part of 'types.dart';
 /// corresponding value as actual type
 Map<String, String> _typeDefines = {
   'PlainType': 'Str',
-  'H256': '[u8; 32]',
-  'Hash': '[u8; 32]',
+  'Hash': 'H256',
   '<T::Lookup as StaticLookup>::Source': 'Address',
   'Balance': 'u128'
 };

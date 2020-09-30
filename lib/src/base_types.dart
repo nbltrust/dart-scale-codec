@@ -201,7 +201,7 @@ class u128 extends ScaleCodecBase {
   u128(this.val);
 
   u128.fromBinary() {
-    val = Uint8ListToBigInt(getReaderInstance().read(16));
+    val = Uint8ListToBigInt(getReaderInstance().read(16, false));
   }
 
   void objToBinary() {
@@ -280,6 +280,16 @@ class Str extends ScaleCodecBase {
   Str.fromJson(this.val);
 }
 
+class H256 extends FixedLengthArr {
+  H256.fromBinary() : super.fromBinary(32, 'u8');
+  H256.fromJson(String hexStr) : super.fromJson(32, 'u8', hex.decode(hexStr));
+  dynamic toJson() {
+    List<int> bytes = [];
+    values.forEach((element) {bytes.add((element as u8).val);});
+    return hex.encode(bytes);
+  }
+}
+
 class Bool extends ScaleCodecBase {
   bool val;
   Bool.fromBinary() {
@@ -328,6 +338,8 @@ class FixedLengthArr extends ScaleCodecBase {
       values.add(fromJson(baseType, i));
     });
   }
+
+  dynamic toJson() => values;
 }
 
 // (type1, type2, type3,...)
@@ -459,23 +471,31 @@ class Compact extends GeneralTemplate {
         compactBytes = Uint8List.fromList(compactByte0 + getReaderInstance().read(3));
         break;
       default:
-        compactLength = (5 + compactByte0[0].toInt() >> 2).toInt();
+        compactLength = (5 + (compactByte0[0] >> 2)).toInt();
         compactBytes = Uint8List.fromList(getReaderInstance().read(compactLength - 1));
     }
 
     // createCompactReaderInstance(compactBytes);
-    if(templateTypes[0] == 'u32') {
-      int val = 0;
-      if(compactLength <= 4) {
-        val = Uint8ListToint(compactBytes) >> 2;
-      } else {
-        val = Uint8ListToint(compactBytes);
-      }
-      obj = u32(val);
-    } else {
-      createCompactReaderInstance(compactBytes);
-      obj = fromBinary(templateTypes[0]);
-      finishCompactReader();
+    var templateName = templateTypes[0];
+    switch (templateName) {
+      case 'u32':
+        int val = 0;
+        if(compactLength <= 4) {
+          val = Uint8ListToint(compactBytes) >> 2;
+        } else {
+          val = Uint8ListToint(compactBytes);
+        }
+        obj = u32(val);
+        break;
+      case 'u128':
+        BigInt val;
+        val = Uint8ListToBigInt(compactBytes);
+        obj = u128(val);
+        break;
+      default:
+        createCompactReaderInstance(compactBytes);
+        obj = fromBinary(templateTypes[0]);
+        finishCompactReader();
     }
   }
 
