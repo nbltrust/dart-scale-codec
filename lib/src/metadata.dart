@@ -17,7 +17,8 @@ class MetadataEnum extends GeneralEnum {
     "MetadataV8", // not implemented
     "MetadataV9", // not implemented
     "MetadataV10", // not implemented
-    "MetadataV11"
+    "MetadataV11", // deprecated
+    "MetadataV12"
   ];
   MetadataEnum.fromBinary(): super.fromBinary();
   MetadataEnum.fromJson(Map<String, dynamic> s):super.fromJson(s);
@@ -117,6 +118,20 @@ class MetadataV8Module extends GeneralStruct {
   MetadataV8Module.fromJson(Map<String, dynamic> s):super.fromJson(s);
 }
 
+class MetadataV12Module extends GeneralStruct {
+  static const List<Tuple2<String, String>> fields = [
+    Tuple2('name', 'Str'),
+    Tuple2('storage', 'Option<MetadataV7ModuleStorage>'),
+    Tuple2('calls', 'Option<Vec<MetadataModuleCall>>'),
+    Tuple2('events', 'Option<Vec<MetadataModuleEvent>>'),
+    Tuple2('constants', 'Vec<MetadataV7ModuleConstants>'),
+    Tuple2('errors', 'Vec<MetadataModuleError>'),
+    Tuple2('index', 'u8')
+  ];
+  MetadataV12Module.fromBinary(): super.fromBinary();
+  MetadataV12Module.fromJson(Map<String, dynamic> s):super.fromJson(s);
+}
+
 class ExtrinsicMetadata extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('version', 'Int8'),
@@ -129,8 +144,17 @@ class ExtrinsicMetadata extends GeneralStruct {
 class MetadataV11 extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('modules', 'Vec<MetadataV8Module>'),
-    Tuple2('extrnsic', 'ExtrinsicMetadata')
+    Tuple2('extrinsic', 'ExtrinsicMetadata')
   ];
   MetadataV11.fromBinary(): super.fromBinary();
   MetadataV11.fromJson(Map<String, dynamic> s):super.fromJson(s);
+}
+
+class MetadataV12 extends GeneralStruct {
+  static const List<Tuple2<String, String>> fields = [
+    Tuple2('modules', 'Vec<MetadataV12Module>'),
+    Tuple2('extrinsic', 'ExtrinsicMetadata')
+  ];
+  MetadataV12.fromBinary(): super.fromBinary();
+  MetadataV12.fromJson(Map<String, dynamic> s):super.fromJson(s);
 }
