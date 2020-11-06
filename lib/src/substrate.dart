@@ -1,6 +1,6 @@
 part of 'types.dart';
 
-class StorageHasher extends Int8 {
+class StorageHasher extends u8 {
   static const List<String> hasher_functions = 
   ['Blake2_128', 'Blake2_256', 'Blake2_128Concat', 'Twox128', 'Twox256', 'Twox64Concat', 'Identity'];
   dynamic toJson() => hasher_functions[val];

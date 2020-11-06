@@ -5,7 +5,6 @@ part of 'types.dart';
 /// 
 /// Should init metadata in [RuntimeConfigration] before calling constructor.
 class GenericCall extends GeneralStruct {
-  List<MetadataModuleCallArgument> callArgs = [];
   Map<String, ScaleCodecBase> argValues = {};
 
   static const List<Tuple2<String, String>> fields = [
@@ -13,29 +12,96 @@ class GenericCall extends GeneralStruct {
     Tuple2('function_index', 'u8'),
   ];
 
-  GenericCall.fromBinary(): super.fromBinary(){
-    dynamic meta = RuntimeConfigration().runtimeMetadata;
-    var function = meta.obj.modules[module_index].calls.obj[function_index];
-    for(var arg in function.args.objects) {
-      callArgs.add(arg);
-    }
+  int get module_index => (values['module_index'] as u8).val;
+  int get function_index => (values['function_index'] as u8).val;
 
+  static bool get isV12orLater {
+    return RuntimeConfigration().isV12OrLater;
+  }
+  
+  static dynamic get runtimeMetadata => RuntimeConfigration().runtimeMetadata.obj;
+  static List<dynamic> get metadataModules => runtimeMetadata.modules.objects;
+
+  dynamic get module {
+    if(isV12orLater) {
+      return metadataModules.firstWhere((i) => i.index.val == module_index);
+    } else {
+      return metadataModules[module_index];
+    }
+  }
+
+
+  Str get function_name {
+    if(!module.calls.presents.val) {
+      throw Exception('No calls in module');
+    }
+    return module.calls.obj[function_index].name;
+  }
+
+  List<MetadataModuleCallArgument> get callArgs {
+    List<MetadataModuleCallArgument> ret = [];
+    var function = module.calls.obj[function_index];
+    for(var arg in function.args.objects) {
+      ret.add(arg);
+    }
+    return ret;
+  }
+
+  GenericCall.fromBinary(): super.fromBinary() {
     for(dynamic arg in callArgs) {
       argValues[arg.name.val] = fromBinary(arg.type.val);
     }
   }
 
-  int get module_index => (values['module_index'] as u8).val;
-  int get function_index => (values['function_index'] as u8).val;
+  void objToBinary() {
+    super.objToBinary();
+    for(dynamic arg in callArgs) {
+      argValues[arg.name.val].objToBinary();
+    }
+  }
 
-  GenericCall.fromJson(Map<String, dynamic> s): super.fromJson(s);
-  Map<String, dynamic> toJson() {
-    dynamic meta = RuntimeConfigration().runtimeMetadata;
-    Map<String, dynamic> ret = {};
-    ret['module'] = meta.obj.modules[module_index].name;
-    ret['function'] = meta.obj.modules[module_index].calls.obj[function_index].name;
-    ret['args'] = argValues;
-    return ret;
+  Map<String, dynamic> toJson() => {
+    'module': module.name,
+    'function': function_name,
+    'args': argValues
+  };
+
+  static Map<String, dynamic> extractIndex(Map<String, dynamic> json) {
+    var module_name = json['module'];
+    var function_name = json['function'];
+    var onModuleNotFound = () { throw Exception("Module ${module_name} not found");};
+    var onFunctionNotFound = () {throw Exception("Function ${function_name} not found");};
+    var module_index = isV12orLater ?
+        metadataModules.firstWhere((m) => m.name.val == module_name, orElse: onModuleNotFound).index.val:
+        metadataModules.indexWhere((m) => m.name.val == module_name);
+
+    if(module_index == -1) {
+      onModuleNotFound();
+    }
+
+    var module = isV12orLater?
+      metadataModules.firstWhere((m) => m.index.val == module_index):
+      metadataModules[module_index];
+
+    if(!module.calls.presents.val) {
+      onFunctionNotFound();
+    }
+
+    var function_index = module.calls.obj.objects.indexWhere((f) => f.name.val == function_name);
+    if(function_index == -1) {
+      onFunctionNotFound();
+    }
+    return {
+      "module_index": module_index,
+      "function_index": function_index
+    };
+  }
+
+  GenericCall.fromJson(Map<String, dynamic> json) : super.fromJson(extractIndex(json)) {
+    var args = json['args'];
+    for(dynamic arg in callArgs) {
+      argValues[arg.name.val] = fromJson(arg.type.val, args[arg.name.val]);
+    }
   }
 }
 

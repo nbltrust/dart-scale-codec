@@ -9,13 +9,14 @@ String strip0x(String hex) {
 
 class BufferedReader {
   final Uint8List _data;
+  final disable_overflow;
   int _current_position;
-  BufferedReader(this._data) {
+  BufferedReader(this._data, [this.disable_overflow = true]) {
     _current_position = 0;
   }
 
-  factory BufferedReader.fromHex(String hex_str) {
-    return BufferedReader(hex.decode(strip0x(hex_str)));
+  factory BufferedReader.fromHex(String hex_str, [disable_overflow = true]) {
+    return BufferedReader(hex.decode(strip0x(hex_str)), disable_overflow);
   }
 
   void reset() {
@@ -27,7 +28,7 @@ class BufferedReader {
     return _current_position == _data.length;
   }
 
-  Uint8List read(int length, [bool disable_overflow = true]) {
+  Uint8List read(int length) {
     int end = length + _current_position;
     assert(length >= 0, "invalid length");
     if(disable_overflow && end > _data.length) {
@@ -48,7 +49,7 @@ void createReaderInstance(String hex) {
 }
 
 void createCompactReaderInstance(Uint8List data) {
-  compactReaderInstance = BufferedReader(data);
+  compactReaderInstance = BufferedReader(data, false);
 }
 
 void finishCompactReader() {

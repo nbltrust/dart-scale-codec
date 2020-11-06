@@ -1,4 +1,4 @@
-import 'types.dart' show MetadataEnum;
+import 'types.dart' show MetadataEnum, MetadataV12;
 
 class RuntimeConfigration {
   factory RuntimeConfigration() =>_getInstance();
@@ -20,4 +20,6 @@ class RuntimeConfigration {
   }
 
   MetadataEnum get runtimeMetadata => _runtimeMetadata;
+
+  bool get isV12OrLater => runtimeMetadata.obj is MetadataV12;
 }

@@ -69,6 +69,7 @@ void main(List<String> args) async {
     });
   });
 
+  print(jsonEncode(metadata));
   createWriterInstance();
   getWriterInstance().write(magicBytes);
   (metadata as MetadataEnum).objToBinary();

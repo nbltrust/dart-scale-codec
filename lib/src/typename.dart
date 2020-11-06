@@ -8,7 +8,8 @@ Map<String, String> _typeDefines = {
   'PlainType': 'Str',
   'Hash': 'H256',
   '<T::Lookup as StaticLookup>::Source': 'Address',
-  'Balance': 'u128'
+  'Balance': 'u128',
+  'Header': 'u128'
 };
 
 /// Split string of subtype definition into list of subtypes

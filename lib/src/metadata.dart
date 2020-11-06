@@ -37,7 +37,7 @@ class MetadataV7ModuleStorageFunctionType extends GeneralEnum {
 class MetadataV7ModuleStorageEntry extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('name', 'Str'),
-    Tuple2('modifier', 'Int8'),
+    Tuple2('modifier', 'i8'),
     Tuple2('function_type', 'MetadataV7ModuleStorageFunctionType'),
     Tuple2('fallback', 'Bytes'),
     Tuple2('docs', 'Vec<Str>')
@@ -134,7 +134,7 @@ class MetadataV12Module extends GeneralStruct {
 
 class ExtrinsicMetadata extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
-    Tuple2('version', 'Int8'),
+    Tuple2('version', 'i8'),
     Tuple2('signed_extensions', 'Vec<Str>')
   ];
   ExtrinsicMetadata.fromBinary(): super.fromBinary();

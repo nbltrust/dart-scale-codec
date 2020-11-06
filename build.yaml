@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      reflectable:
+        generate_for:
+          - example/*_demo.dart
+          - test/*_refl_tests.dart
+          - tool/dump_metadata.dart

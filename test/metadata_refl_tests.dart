@@ -5,11 +5,11 @@ import 'dart:io';
 import 'package:convert/convert.dart';
 import 'package:scalecodec/scalecodec.dart';
 
-import 'metadata_tests.reflectable.dart';
+import 'metadata_refl_tests.reflectable.dart';
 
 void main() {
   initializeReflectable();
-  File f = new File('metadata_test_data.txt');
+  File f = new File('metadata.bin');
   String hex_str = f.readAsStringSync();
   createReaderInstance(hex_str);
   getReaderInstance().read(4);//skip magic

@@ -46,7 +46,8 @@ abstract class ScaleCodecBase {
 ClassMirror getDecoderClass(String class_name) {
   var libraryMirror = scaleTypeReflector.findLibrary('scalecodec.types');
   var mirror = libraryMirror.declarations[class_name];
-  assert(mirror != null, "Class ${class_name} not found in reflection system");
+  if(mirror == null)
+    throw Exception("Class ${class_name} not found in reflection system");
   return mirror;
 }
 
@@ -111,139 +112,161 @@ ScaleCodecBase fromJson(String typeName, dynamic val) {
   }
 }
 
-// =============================================================
-// Numeric conversion functions deal with little endian integers
-// =============================================================
-int Uint8ListToint(Uint8List l) {
-  int res = 0;
-  int shift = 0;
-  l.forEach((v) {
-    res += (v << shift);
-    shift += 8;
-  });
-  return res;
-}
+abstract class IntegerBase extends ScaleCodecBase {
+  BigInt _val;
 
-BigInt Uint8ListToBigInt(Uint8List l) {
-  BigInt res = BigInt.zero;
-  int shift = 0;
-  l.forEach((v) {
-    res += BigInt.from(v << shift);
-    shift += 8;
-  });
-  return res;
-}
-
-Uint8List intToUint8List(int v, int byteLength) {
-  var res = Uint8List(byteLength);
-  for(var i = 0; i < byteLength; i++) {
-    res[i] = v >> (8 * i);
+  static BigInt convertToBigInt(dynamic s) {
+    if(s is String)
+      return BigInt.parse(s);
+    else if(s is num)
+      return BigInt.from(s);
+    else if(s is BigInt)
+      return s;
+    else
+      throw Exception("Invalid init type for integer");
   }
-  return res;
-}
+  IntegerBase(dynamic s):
+    _val = convertToBigInt(s);
 
-Uint8List BigIntToUint8List(BigInt v, int byteLength) {
-  var res = Uint8List(byteLength);
-  for(var i = 0; i < byteLength; i++) {
-    res[i] = (v >> (8 * i)).toInt();
-  }
-  return res;
-}
-
-// ===========
-// Basic types
-// ===========
-class u8 extends ScaleCodecBase {
-  int val;
-  u8(this.val);
-  u8.fromBinary() {
-    val = getReaderInstance().read(1)[0];
-  }
-  void objToBinary() {
-    getWriterInstance().write(intToUint8List(val, 1));
-  }
-  dynamic toJson() => val;
-  u8.fromJson(this.val);
-}
-
-class u16 extends ScaleCodecBase {
-  int val;
-  u16(this.val);
-  u16.fromBinary() {
-    val = Uint8ListToint(getReaderInstance().read(2));
+  IntegerBase.fromBinary() {
+    _val = Uint8ListToBigInt(getReaderInstance().read(byteSize));
   }
 
   void objToBinary() {
-    getWriterInstance().write(intToUint8List(val, 2));
+    getWriterInstance().write(BigIntToUint8List(_val, byteSize));
   }
 
   dynamic toJson() => val;
-  String toString() => val.toString();
-  u16.fromJson(this.val);
+  String toString() => _val.toString();
+  IntegerBase.fromJson(dynamic s):
+    _val = convertToBigInt(s);
+
+  /// return a json compatible presentation of current value
+  /// 
+  /// Return string repr for hudge numbers(byte size > 8) 
+  /// Return numeric repr for small numbers(byte size <= 8)
+  dynamic get val {
+    if(byteSize > 8 || !_val.isValidInt) {
+      return _val.toString();
+    }
+    return _val.toInt();
+  }
+
+  set val(dynamic s) {
+    _val = convertToBigInt(s);
+  }
+
+  int get byteSize;
 }
 
-class u32 extends ScaleCodecBase {
-  int val;
-  u32(this.val);
-  u32.fromBinary() {
-    val = Uint8ListToint(getReaderInstance().read(4));
-  }
+class u8 extends IntegerBase {
+  u8(dynamic s): super(s);
 
-  void objToBinary() {
-    getWriterInstance().write(intToUint8List(val, 4));
-  }
-  dynamic toJson() => val;
-  String toString() => val.toString();
-  u32.fromJson(this.val);
+  u8.fromBinary():super.fromBinary();
+  u8.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 1;
 }
 
-class u128 extends ScaleCodecBase {
-  BigInt val;
-  u128(this.val);
+class u16 extends IntegerBase {
+  u16(dynamic s): super(s);
 
-  u128.fromBinary() {
-    val = Uint8ListToBigInt(getReaderInstance().read(16, false));
-  }
+  u16.fromBinary():super.fromBinary();
+  u16.fromJson(dynamic s): super.fromJson(s);
 
-  void objToBinary() {
-    getWriterInstance().write(BigIntToUint8List(val, 16));
-  }
-
-  dynamic toJson() => val.toString();
-  u128.fromJson(String s): val = BigInt.parse(s);
-
-  String toString() => val.toString();
+  @override
+  int get byteSize => 2;
 }
 
-class Int8 extends ScaleCodecBase {
-  int val;
-  Int8(this.val);
-  Int8.fromBinary() {
-    val = getReaderInstance().read(1)[0];
-  }
-  Int8.fromJson(this.val);
+class u32 extends IntegerBase {
+  u32(dynamic s): super(s);
 
-  void objToBinary() {
-    getWriterInstance().write(intToUint8List(val, 1));
-  }
-  dynamic toJson() => val;
-  String toString() => val.toString();  
+  u32.fromBinary():super.fromBinary();
+  u32.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 4;
 }
 
-class Int32 extends ScaleCodecBase {
-  int val;
-  Int32(this.val);
-  Int32.fromBinary() {
-    val = Uint8ListToint(getReaderInstance().read(4));
-  }
+class u64 extends IntegerBase {
+  u64(dynamic s): super(s);
+  
+  u64.fromBinary():super.fromBinary();
+  u64.fromJson(dynamic s): super.fromJson(s);
 
-  void objToBinary() {
-    getWriterInstance().write(intToUint8List(val, 4));
-  }
+  @override
+  int get byteSize => 8;
+}
 
-  dynamic toJson() => val;
-  String toString() => val.toString();
-  Int32.fromJson(this.val);
+class u128 extends IntegerBase {
+  u128(dynamic s): super(s);
+
+  u128.fromBinary():super.fromBinary();
+  u128.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 16;
+}
+
+class i8 extends IntegerBase {
+  i8(dynamic s): super(s);
+
+  i8.fromBinary(): super.fromBinary();
+  i8.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 1;
+}
+
+class i16 extends IntegerBase {
+  i16(dynamic s): super(s);
+
+  i16.fromBinary(): super.fromBinary();
+  i16.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 2;
+}
+
+class i32 extends IntegerBase {
+  i32(dynamic s): super(s);
+
+  i32.fromBinary(): super.fromBinary();
+  i32.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 4;
+}
+
+class i64 extends IntegerBase {
+  i64(dynamic s): super(s);
+
+  i64.fromBinary(): super.fromBinary();
+  i64.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 8;
+}
+
+class i128 extends IntegerBase {
+  i128(dynamic s): super(s);
+
+  i128.fromBinary(): super.fromBinary();
+  i128.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 16;
+}
+
+class i256 extends IntegerBase {
+  i256(dynamic s): super(s);
+
+  i256.fromBinary(): super.fromBinary();
+  i256.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 32;
 }
 
 class Bytes extends ScaleCodecBase {
@@ -293,6 +316,8 @@ class H256 extends FixedLengthArr {
 
 class Bool extends ScaleCodecBase {
   bool val;
+  Bool(bool b): val = b;
+
   Bool.fromBinary() {
     int b = getReaderInstance().read(1)[0];
     switch(b) {
@@ -377,7 +402,6 @@ abstract class GeneralStruct extends ScaleCodecBase {
   GeneralStruct.fromBinary() {
     for(var f in this.params) {
       // print('${scaleTypeReflector.reflect(this).type.simpleName}::${f.item1}');
-      
       values[f.item1] = fromBinary(f.item2);
       // print(values[f.item1]);
     }
@@ -416,14 +440,14 @@ abstract class GeneralEnum extends ScaleCodecBase {
   int index;
   ScaleCodecBase obj;
   GeneralEnum.fromBinary() {
-    index = (fromBinary('Int8') as Int8).val;
+    index = (fromBinary('u8') as u8).val;
     assert(index < enumTypes.length && index >= 0, 
       "Enum index out of range ${this.runtimeType}:${index}");
     obj = fromBinary(enumTypes[index]);
   }
 
   void objToBinary() {
-    Int8(index).objToBinary();
+    u8(index).objToBinary();
     obj.objToBinary();
   }
 
@@ -476,58 +500,38 @@ class Compact extends GeneralTemplate {
         compactBytes = Uint8List.fromList(getReaderInstance().read(compactLength - 1));
     }
 
-    // createCompactReaderInstance(compactBytes);
-    var templateName = templateTypes[0];
-    switch (templateName) {
-      case 'u32':
-        int val = 0;
-        if(compactLength <= 4) {
-          val = Uint8ListToint(compactBytes) >> 2;
-        } else {
-          val = Uint8ListToint(compactBytes);
-        }
-        obj = u32(val);
-        break;
-      case 'u128':
-        BigInt val;
-        val = Uint8ListToBigInt(compactBytes);
-        obj = u128(val);
-        break;
-      default:
-        createCompactReaderInstance(compactBytes);
-        obj = fromBinary(templateTypes[0]);
-        finishCompactReader();
+    if(compactLength <= 4) {
+      createCompactReaderInstance(Uint8ListShiftRight(compactBytes, 2));
+    } else {
+      createCompactReaderInstance(compactBytes);
     }
+
+    obj = fromBinary(templateTypes[0]);
+    finishCompactReader();
   }
 
   void objToBinary() {
     createCompactWriterInstance();
     obj.objToBinary();
     var plainData = finishCompactWriter();
-    var idx = plainData.lastIndexWhere((element) => element > 0);
-    if(idx <= 3) {
-      int val = Uint8ListToint(plainData);
-      Uint8List encoded = null;
-      if(val <= 0x3f) {// <= 00111111
-        encoded = intToUint8List((val << 2), 1);
-      } else if(val <= 0x3fff) {// <= 0011111111111111
-        encoded = intToUint8List((val << 2) | 0x01, 2);
-      } else if(val <= 0x3fffffff) {// <= 00111111111111111111111111111111
-        encoded = intToUint8List((val << 2) | 0x02, 4);
-      }
-
-      if(encoded != null) {
-        getWriterInstance().write(encoded);
-        return;
-      }
-    }
     
-    int byteLength = idx + 1;
-    int encodedByteLength = ((byteLength - 4) << 2) | 0x03;
-    var encoded = Uint8List.fromList(
-      [encodedByteLength] + 
-      plainData.sublist(0, byteLength)
-    );
+    var val = Uint8ListToBigInt(plainData); // convert it as unsigned data
+    Uint8List encoded = null;
+    if(val <= BigInt.from(0x3f)) {// <= 00111111
+      encoded = BigIntToUint8List((val << 2), 1);
+    } else if(val <= BigInt.from(0x3fff)) {// <= 0011111111111111
+      encoded = BigIntToUint8List((val << 2) | BigInt.from(0x01), 2);
+    } else if(val <= BigInt.from(0x3fffffff)) {// <= 00111111111111111111111111111111
+      encoded = BigIntToUint8List((val << 2) | BigInt.from(0x02), 4);
+    } else {
+      var byteLength = plainData.lastIndexWhere((element) => element > 0) + 1;
+      int encodedByteLength = ((byteLength - 4) << 2) | 0x03;
+      encoded = Uint8List.fromList(
+        [encodedByteLength] + 
+        plainData.sublist(0, byteLength)
+      );
+    }
+
     getWriterInstance().write(encoded);
   }
 
