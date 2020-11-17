@@ -3,6 +3,7 @@ description: Usage demo of scalecodec lib
 publish_to: 'none'
 
 dependencies:
+  convert: ^2.1.1
   scalecodec:
     path: ../
 

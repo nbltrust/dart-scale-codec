@@ -304,14 +304,27 @@ class Str extends ScaleCodecBase {
   Str.fromJson(this.val);
 }
 
-class H256 extends FixedLengthArr {
-  H256.fromBinary() : super.fromBinary(32, 'u8');
-  H256.fromJson(String hexStr) : super.fromJson(32, 'u8', hex.decode(hexStr));
-  dynamic toJson() {
-    List<int> bytes = [];
-    values.forEach((element) {bytes.add((element as u8).val);});
-    return hex.encode(bytes);
-  }
+abstract class HashBase extends FixedLengthArr {
+  HashBase.fromBinary(int byteSize) : super.fromBinary(byteSize, 'u8');
+  HashBase.fromJson(int byteSize, String hexStr) : super.fromJson(byteSize, 'u8', hex.decode(strip0x(hexStr)));
+  String toString() =>
+    hex.encode(List.from(values.map((element) => (element as u8).val)));
+  dynamic toJson() => '0x' + toString();
+}
+
+class H160 extends HashBase {
+  H160.fromBinary() : super.fromBinary(20);
+  H160.fromJson(String hexStr) : super.fromJson(20, hexStr);
+}
+
+class H256 extends HashBase {
+  H256.fromBinary() : super.fromBinary(32);
+  H256.fromJson(String hexStr) : super.fromJson(32, hexStr);
+}
+
+class H512 extends HashBase { 
+  H512.fromBinary() : super.fromBinary(64);
+  H512.fromJson(String hexStr) : super.fromJson(64, hexStr);
 }
 
 class Bool extends ScaleCodecBase {

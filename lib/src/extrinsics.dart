@@ -105,7 +105,7 @@ class GenericCall extends GeneralStruct {
   }
 }
 
-class Extrinsics extends GeneralStruct {
+class ExtrinsicsPayloadValue extends GeneralStruct {
   static const List<Tuple2<String, String>> fields = [
     Tuple2('call', 'GenericCall'),
     Tuple2('era', 'Era'),
@@ -117,6 +117,66 @@ class Extrinsics extends GeneralStruct {
     Tuple2('block_hash', 'Hash')
   ];
 
-  Extrinsics.fromBinary(): super.fromBinary();
-  Extrinsics.fromJson(Map<String, dynamic> s): super.fromJson(s);
+
+  ExtrinsicsPayloadValue.fromBinary(): super.fromBinary();
+  ExtrinsicsPayloadValue.fromJson(Map<String, dynamic> s): super.fromJson(s);
+}
+
+class Extrinsics extends ScaleCodecBase {
+  u8 versionInfo;
+  bool containsTransaction;
+  Address accountId;
+  u8 signatureVersion;
+  H512 signature;
+  Era era;
+  Compact nonce;
+  Compact tip;
+  GenericCall call;
+  
+  factory Extrinsics.fromJson(Map<String, dynamic> json) {
+    if(json.containsKey('accountId')) {
+      // contains transaction
+        return Extrinsics(
+          GenericCall.fromJson(json['call']),
+          u8.fromJson(json['versionInfo']),
+          true,
+          Address.fromJson(json['accountId']),
+          u8.fromJson(json['signatureVersion']),
+          H512.fromJson(json['signature']),
+          Era.fromJson(json['era']),
+          Compact.fromJson(['u64'], json['nonce']),
+          Compact.fromJson(['Balance'], json['tip'])
+        );
+    } else {
+      return Extrinsics(
+        GenericCall.fromJson(json['call']),
+        u8.fromJson(json['versionInfo']),
+        false);
+    }
+  }
+
+  Extrinsics(this.call, this.versionInfo, this.containsTransaction, [
+    this.accountId,
+    this.signatureVersion,
+    this.signature,
+    this.era,
+    this.nonce,
+    this.tip,
+  ]);
+
+  void objToBinary() {
+    var writer = getWriterInstance();
+    if(containsTransaction) {
+      writer.write(Uint8List.fromList([0x84]));
+      accountId.objToBinary();
+      signatureVersion.objToBinary();
+      signature.objToBinary();
+      era.objToBinary();
+      nonce.objToBinary();
+      tip.objToBinary();
+    } else {
+      writer.write(Uint8List.fromList([0x04]));
+    }
+    call.objToBinary();
+  }
 }
