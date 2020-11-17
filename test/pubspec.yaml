@@ -6,9 +6,9 @@ dependencies:
   json_annotation: ^3.0.0
   convert: ^2.1.1
   reflectable: any
+  test: any
   scalecodec:
     path: ../
 
 dev_dependencies:
-  test: any
   build_runner: any
