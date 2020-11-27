@@ -6,7 +6,8 @@ class StorageHasher extends u8 {
   dynamic toJson() => hasher_functions[val];
   StorageHasher.fromJson(dynamic s):super(-1) {
     var idx = hasher_functions.indexOf(s as String);
-    assert(idx >= 0, "invalid value of StorageHasher");
+    if(idx < 0)
+      throw Exception("invalid value of StorageHasher");
     val = idx;
   }
   StorageHasher.fromBinary():super.fromBinary();
@@ -120,7 +121,8 @@ class Era extends  ScaleCodecBase {
 
   Era.fromJson(Map<String, dynamic> s) {
     if(s['period'] == null || s['phase'] == null) {
-      assert(s['period'] == null && s['phase'] == null, "period and phase must be both (or both not) be null");
+      if(s['period'] != null || s['phase'] != null)
+        throw Exception("period and phase must be both (or both not) be null");
       firstByte = 0;
       secondByte = 0;
     } else {

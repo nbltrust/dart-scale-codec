@@ -4,7 +4,7 @@ import 'package:convert/convert.dart';
 import 'package:scalecodec/scalecodec.dart';
 import 'package:test/test.dart';
 
-import 'compact_refl_tests.reflectable.dart';
+import 'compact_refl_test.reflectable.dart';
 
 dynamic decode(String type, String input) {
   createReaderInstance(input);

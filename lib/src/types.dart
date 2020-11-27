@@ -13,7 +13,6 @@ import 'package:scalecodec/scalecodec.dart';
 import 'package:tuple/tuple.dart';
 
 import 'util/base58.dart';
-import 'util/hash.dart';
 import 'util/math.dart';
 import 'util/uint8_buffer.dart';
 import 'util/byte_convert.dart';

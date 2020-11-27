@@ -34,8 +34,8 @@ abstract class ScaleCodecBase {
       setSymbol(symbol, invocation.positionalArguments[0]);
     }
   }
-  ScaleCodecBase(){}
-  ScaleCodecBase.fromBinary() {}
+  ScaleCodecBase();
+  ScaleCodecBase.fromBinary();
   void objToBinary() {}
 
   dynamic toJson() => {};  
@@ -88,14 +88,14 @@ ScaleCodecBase fromJson(String typeName, dynamic val) {
   var typeRes = processTypeName(typeName);
   switch (typeRes.item1) {
     case 'AnonymousStruct':
-      assert(val.runtimeType == List,
-        "Incompatibal input type ${val.runtimeType} for anonymous struct");
+      if(val.runtimeType != List)
+        throw Exception("Incompatibal input type ${val.runtimeType} for anonymous struct");
       var subTypeArr = typeRes.item2 as List<String>;
       return AnonymousStruct.fromJson(subTypeArr, val);
     case 'FixedLengthArr':
       var res = typeRes.item2 as Tuple2<int, String>;
-      assert(val.runtimeType == List,
-        "Incompatibal input type ${val.runtimeType} for fixed length arr");
+      if(val.runtimeType != List)
+        throw Exception("Incompatibal input type ${val.runtimeType} for fixed length arr");
       return FixedLengthArr.fromJson(res.item1, res.item2, val as List<dynamic>);
     case 'Template':
       var res = typeRes.item2 as Tuple2<String, List<String>>;
@@ -129,11 +129,11 @@ abstract class IntegerBase extends ScaleCodecBase {
     _val = convertToBigInt(s);
 
   IntegerBase.fromBinary() {
-    _val = Uint8ListToBigInt(getReaderInstance().read(byteSize));
+    _val = Uint8ListToBigInt(getReaderInstance().read(byteSize), signed: signed);
   }
 
   void objToBinary() {
-    getWriterInstance().write(BigIntToUint8List(_val, byteSize));
+    getWriterInstance().write(BigIntToUint8List(_val, byteSize, signed: signed));
   }
 
   dynamic toJson() => val;
@@ -157,6 +157,7 @@ abstract class IntegerBase extends ScaleCodecBase {
   }
 
   int get byteSize;
+  bool get signed;
 }
 
 class u8 extends IntegerBase {
@@ -167,6 +168,9 @@ class u8 extends IntegerBase {
 
   @override
   int get byteSize => 1;
+
+  @override
+  bool get signed => false;
 }
 
 class u16 extends IntegerBase {
@@ -177,6 +181,9 @@ class u16 extends IntegerBase {
 
   @override
   int get byteSize => 2;
+  
+  @override
+  bool get signed => false;
 }
 
 class u32 extends IntegerBase {
@@ -187,6 +194,9 @@ class u32 extends IntegerBase {
 
   @override
   int get byteSize => 4;
+  
+  @override
+  bool get signed => false;
 }
 
 class u64 extends IntegerBase {
@@ -197,6 +207,9 @@ class u64 extends IntegerBase {
 
   @override
   int get byteSize => 8;
+  
+  @override
+  bool get signed => false;
 }
 
 class u128 extends IntegerBase {
@@ -207,6 +220,22 @@ class u128 extends IntegerBase {
 
   @override
   int get byteSize => 16;
+  
+  @override
+  bool get signed => false;
+}
+
+class u256 extends IntegerBase {
+  u256(dynamic s): super(s);
+
+  u256.fromBinary():super.fromBinary();
+  u256.fromJson(dynamic s): super.fromJson(s);
+
+  @override
+  int get byteSize => 32;
+  
+  @override
+  bool get signed => false;
 }
 
 class i8 extends IntegerBase {
@@ -217,6 +246,9 @@ class i8 extends IntegerBase {
 
   @override
   int get byteSize => 1;
+  
+  @override
+  bool get signed => true;
 }
 
 class i16 extends IntegerBase {
@@ -227,6 +259,9 @@ class i16 extends IntegerBase {
 
   @override
   int get byteSize => 2;
+
+  @override
+  bool get signed => true;
 }
 
 class i32 extends IntegerBase {
@@ -237,6 +272,9 @@ class i32 extends IntegerBase {
 
   @override
   int get byteSize => 4;
+
+  @override
+  bool get signed => true;
 }
 
 class i64 extends IntegerBase {
@@ -247,6 +285,9 @@ class i64 extends IntegerBase {
 
   @override
   int get byteSize => 8;
+  
+  @override
+  bool get signed => true;
 }
 
 class i128 extends IntegerBase {
@@ -257,6 +298,9 @@ class i128 extends IntegerBase {
 
   @override
   int get byteSize => 16;
+  
+  @override
+  bool get signed => true;
 }
 
 class i256 extends IntegerBase {
@@ -267,6 +311,9 @@ class i256 extends IntegerBase {
 
   @override
   int get byteSize => 32;
+  
+  @override
+  bool get signed => true;
 }
 
 class Bytes extends ScaleCodecBase {
@@ -341,7 +388,7 @@ class Bool extends ScaleCodecBase {
         val = true;
         break;
       default:
-        throw "invalid bool encoding value";
+        throw Exception("invalid bool encoding value");
     }
   }
   void objToBinary() {
@@ -371,8 +418,8 @@ class FixedLengthArr extends ScaleCodecBase {
   }
 
   FixedLengthArr.fromJson(int length, String baseType, List<dynamic> val) {
-    assert(length == val.length,
-      "Incompatibal length for fixed length arr, ${length} != ${val.length}");
+    if(length != val.length)
+      throw Exception("Incompatibal length for fixed length arr, ${length} != ${val.length}");
     val.forEach((i) {
       values.add(fromJson(baseType, i));
     });
@@ -396,8 +443,8 @@ class AnonymousStruct extends ScaleCodecBase {
   }
 
   AnonymousStruct.fromJson(List<String> subtypes, List<dynamic> val) {
-    assert(subtypes.length == val.length,
-      "Incompatibal input length for anonymous struct");
+    if(subtypes.length != val.length)
+      throw Exception("Incompatibal input length for anonymous struct");
     for(var i = 0; i < subtypes.length; i++) {
       data.add(fromJson(subtypes[i], val[i]));
     }
@@ -431,7 +478,7 @@ abstract class GeneralStruct extends ScaleCodecBase {
     for(var f in this.params) {
       if(!s.containsKey(f.item1)) {
         var typeName = scaleTypeReflector.reflect(this).type.simpleName;
-        throw "Field ${f.item1} not present for ${typeName}";
+        throw Exception("Field ${f.item1} not present for ${typeName}");
       }
       values[f.item1] = fromJson(f.item2, s[f.item1]);
     }
@@ -454,8 +501,8 @@ abstract class GeneralEnum extends ScaleCodecBase {
   ScaleCodecBase obj;
   GeneralEnum.fromBinary() {
     index = (fromBinary('u8') as u8).val;
-    assert(index < enumTypes.length && index >= 0, 
-      "Enum index out of range ${this.runtimeType}:${index}");
+    if(index >= enumTypes.length || index < 0) 
+      throw Exception("Enum index out of range ${this.runtimeType}:${index}");
     obj = fromBinary(enumTypes[index]);
   }
 
@@ -490,7 +537,8 @@ class Compact extends GeneralTemplate {
   ScaleCodecBase obj;
   Compact(this.obj);
   Compact.fromBinary(List<String> templateTypes) {
-    assert(templateTypes.length == 1, "Invalid template type for compact");
+    if(templateTypes.length != 1)
+      throw Exception("Invalid template type for compact");
 
     var compactByte0 = getReaderInstance().read(1);
     Uint8List compactBytes;
@@ -549,7 +597,8 @@ class Compact extends GeneralTemplate {
   }
 
   Compact.fromJson(List<String> templateTypes, dynamic val) {
-    assert(templateTypes.length == 1, "Invalid template type for compact");
+    if(templateTypes.length != 1)
+      throw Exception("Invalid template type for compact");
     obj = fromJson(templateTypes[0], val);
   }
 
@@ -561,7 +610,8 @@ class Vec extends GeneralTemplate {
   Vec(this.objects);
 
   Vec.fromBinary(List<String> templateTypes) {
-    assert(templateTypes.length == 1, "Invalid template type for vec");
+    if(templateTypes.length != 1)
+      throw Exception("Invalid template type for vec");
     var obj = fromBinary('Compact<u32>');
     var length = ((obj as Compact).obj as u32).val;
     for(var i = 0; i < length; i++) {
@@ -577,8 +627,10 @@ class Vec extends GeneralTemplate {
   }
 
   Vec.fromJson(List<String> templateTypes, List<dynamic> val) {
-    assert(templateTypes.length == 1, "Invalid template type for vec");
-    assert(val is List, "Invalid value type for Vec");
+    if(templateTypes.length != 1)
+      throw Exception("Invalid template type for vec");
+    if(!(val is List))
+      throw Exception("Invalid value type for Vec");
     val.forEach((i) {
       objects.add(fromJson(templateTypes[0], i));
     });
@@ -595,24 +647,67 @@ class Vec extends GeneralTemplate {
 class Option extends GeneralTemplate {
   Bool presents;
   ScaleCodecBase obj;
-  Option.fromBinary(List<String> subTypes) {
-    assert(subTypes.length == 1, "invalid template type for option");
-    presents = fromBinary('Bool');
-    if(presents.val) {
-      obj = fromBinary(subTypes[0]);
-    } else {
+  Option(ScaleCodecBase o) {
+    if(o == null) {
+      presents = Bool(false);
       obj = null;
+    } else {
+      presents = Bool(true);
+      obj = o;
+    }
+  }
+  Option.fromBinary(List<String> subTypes) {
+    if(subTypes.length != 1)
+      throw Exception("invalid template type for option");
+
+    // special case for Option<Bool>
+    // https://substrate.dev/docs/en/knowledgebase/advanced/codec#options
+    if(subTypes[0] == 'Bool') {
+      var val = fromBinary('u8') as u8;
+      switch(val.val) {
+        case 0:
+          presents = Bool(false);
+          obj = null;
+          break;
+        case 1:
+          presents = Bool(true);
+          obj = Bool(true);
+          break;
+        case 2:
+          presents = Bool(true);
+          obj = Bool(false);
+          break;
+        default:
+          throw Exception('Invalid value for Option<Bool>');
+      }
+    } else {
+      presents = fromBinary('Bool');
+      if(presents.val) {
+        obj = fromBinary(subTypes[0]);
+      } else {
+        obj = null;
+      }
     }
   }
 
   void objToBinary() {
-    presents.objToBinary();
-    if(presents.val) {
-      obj.objToBinary();
+    if(presents.val && obj.runtimeType == Bool) {
+      if((obj as Bool).val) {
+        u8(1).objToBinary();
+      } else {
+        u8(2).objToBinary();
+      }
+    } else {
+      presents.objToBinary();
+      if(presents.val) {
+        obj.objToBinary();
+      }
     }
   }
+
   Option.fromJson(List<String> templateTypes, dynamic val) {
-    assert(templateTypes.length == 1, "Invalid template type for option");
+    if(templateTypes.length != 1)
+      throw Exception("Invalid template type for option");
     if(val == null) {
       presents = Bool.fromJson(false);
       obj = null;

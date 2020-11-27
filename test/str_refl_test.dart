@@ -4,7 +4,7 @@ import 'package:convert/convert.dart';
 import 'package:scalecodec/scalecodec.dart';
 import 'package:test/test.dart';
 
-import 'str_refl_tests.reflectable.dart';
+import 'str_refl_test.reflectable.dart';
 
 String encode(String input) {
   createWriterInstance();

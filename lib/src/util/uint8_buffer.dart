@@ -30,9 +30,10 @@ class BufferedReader {
 
   Uint8List read(int length) {
     int end = length + _current_position;
-    assert(length >= 0, "invalid length");
+    if(length < 0)
+      throw Exception("invalid length");
     if(disable_overflow && end > _data.length) {
-      throw "read overflow";
+      throw Exception("read overflow");
     }
     end = end < _data.length? end : _data.length;
     int begin = _current_position;
@@ -53,10 +54,11 @@ void createCompactReaderInstance(Uint8List data) {
 }
 
 void finishCompactReader() {
-  assert(compactReaderInstance != null, "not in compact reader mode");
+  if(compactReaderInstance == null)
+    throw Exception("not in compact reader mode");
 
   if(!compactReaderInstance.isFinished()) {
-    throw "have not read all compact bytes when finish compact mode";
+    throw Exception("have not read all compact bytes when finish compact mode");
   }
   compactReaderInstance = null;
 }
@@ -89,7 +91,8 @@ void createCompactWriterInstance() {
 }
 
 Uint8List finishCompactWriter() {
-  assert(compactWriterInstance != null, "not in compact writer mode");
+  if(compactWriterInstance == null)
+    throw Exception("not in compact writer mode");
   var r = compactWriterInstance.finalize();
   compactWriterInstance = null;
   return r;

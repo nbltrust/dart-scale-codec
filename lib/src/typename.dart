@@ -51,7 +51,7 @@ Tuple2<String, dynamic> processTypeName(String typeName) {
   }
 
   if(typeName.length == 0) {
-    throw "empty typeName not supported";
+    throw Exception("empty typeName not supported");
   }
 
   typeName = _typeDefines[typeName] ?? typeName;
@@ -63,7 +63,7 @@ Tuple2<String, dynamic> processTypeName(String typeName) {
       var subTypes = splitSubTypes(typeName.substring(1, typeName.length - 1));
       return Tuple2('AnonymousStruct', subTypes);
     }
-    throw "invalid typeName ${typeName}";
+    throw Exception("invalid typeName ${typeName}");
   }
 
   // process with fixed length array
@@ -76,7 +76,7 @@ Tuple2<String, dynamic> processTypeName(String typeName) {
       var length = int.parse(match.group(2));
       return Tuple2('FixedLengthArr', Tuple2(length, baseType));
     }
-    throw "invalid typeName ${typeName}";
+    throw Exception("invalid typeName ${typeName}");
   }
 
   // process with general type
@@ -89,7 +89,7 @@ Tuple2<String, dynamic> processTypeName(String typeName) {
       var subTypes = splitSubTypes(match.group(2));
       return Tuple2('Template', Tuple2(baseType, subTypes));
     }
-    throw "invalid typeName ${typeName}";
+    throw Exception("invalid typeName ${typeName}");
   }
 
   return Tuple2('CommonType', typeName);

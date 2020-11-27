@@ -4,7 +4,7 @@ import 'package:convert/convert.dart';
 import 'package:scalecodec/scalecodec.dart';
 import 'package:test/test.dart';
 
-import 'extrinsics_payload_refl_tests.reflectable.dart';
+import 'extrinsics_payload_refl_test.reflectable.dart';
 import 'runtime.dart';
 
 ExtrinsicsPayloadValue decodeExtrinsicPayload(String callHexStr) {

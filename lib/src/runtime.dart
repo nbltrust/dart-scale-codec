@@ -12,7 +12,7 @@ class RuntimeConfigration {
     return _instance;
   }
 
-  RuntimeConfigration._internal() {}
+  RuntimeConfigration._internal();
 
 
   registMetadata(MetadataEnum metadata) {
