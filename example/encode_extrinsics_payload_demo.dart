@@ -3,12 +3,12 @@ library scalecodec_demo.encode_extrinsics_demo;
 import 'package:scalecodec/scalecodec.dart';
 import 'package:convert/convert.dart';
 
-import 'encode_extrinsics_demo.reflectable.dart';
+import 'encode_extrinsics_payload_demo.reflectable.dart';
 import 'runtime.dart';
 
 void main() async {
   initializeReflectable();
-  var metadata = await getMetadata('metadata.bin');
+  var metadata = await getMetadata('wss://cc1-1.polkadot.network/');
   RuntimeConfigration().registMetadata(metadata);
 
   Map<String, dynamic> extrinsicsJson = {
@@ -31,7 +31,7 @@ void main() async {
     'genesis_hash': '97094e6fb7fb6066cacbf47074a16ce8d4f38a9d02493635f543e2da6d20d575',
     'block_hash': '97094e6fb7fb6066cacbf47074a16ce8d4f38a9d02493635f543e2da6d20d575'
   };
-  var extrinsics = Extrinsics.fromJson(extrinsicsJson);
+  var extrinsics = ExtrinsicsPayloadValue.fromJson(extrinsicsJson);
   createWriterInstance();
   extrinsics.objToBinary();
   print(hex.encode(getWriterInstance().finalize()));

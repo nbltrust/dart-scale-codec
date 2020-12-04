@@ -19,3 +19,12 @@ doc/api/
 *.js_
 *.js.deps
 *.js.map
+
+test/.test_coverage.dart
+tool/*.bin
+*.bin
+*.reflectable.dart
+.vscode/
+coverage/*
+.gitignore
+coverage_badge.svg

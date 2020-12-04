@@ -1,4 +1,6 @@
-library scalecodec_test.base_types_tests;
+library scalecodec_test.base_types_refl_test;
+
+import 'dart:convert';
 
 import 'package:convert/convert.dart';
 import 'package:scalecodec/scalecodec.dart';
@@ -53,7 +55,7 @@ void main() {
 
     u8_decode('00', u8(0));
     u8_decode('01', u8(1));
-    u8_decode('64', u8(100));
+    u8_decode('64', u8.fromJson(100));
     u8_decode('ff', u8(255));
   });
 
@@ -78,7 +80,7 @@ void main() {
     i8_decode('00', i8(0));
     i8_decode('01', i8(1));
     i8_decode('64', i8(100));
-    i8_decode('ff', i8(-1));
+    i8_decode('ff', i8.fromJson(-1));
     i8_decode('80', i8(-128));
   });
 
@@ -104,7 +106,7 @@ void main() {
     u16_decode('0000', u16(0));
     u16_decode('6400', u16(100));
     u16_decode('e803', u16(1000));
-    u16_decode('ffff', u16(65535));
+    u16_decode('ffff', u16.fromJson(65535));
   });
   
   test('test encode i16', () {
@@ -134,7 +136,7 @@ void main() {
     i16_decode('7f00', i16(127));
     i16_decode('ff7f', i16(32767));
     i16_decode('ffff', i16(-1));
-    i16_decode('80ff', i16(-128));
+    i16_decode('80ff', i16.fromJson(-128));
   });
   
   test('test encode u32', () {
@@ -159,7 +161,7 @@ void main() {
     u32_decode('00000000', u32(0));
     u32_decode('64000000', u32(100));
     u32_decode('00010000', u32(256));
-    u32_decode('e8030000', u32(1000));
+    u32_decode('e8030000', u32.fromJson(1000));
     u32_decode('ffffffff', u32(4294967295));
   });
   
@@ -192,8 +194,8 @@ void main() {
     i32_decode('0x80000000', i32(128));
     i32_decode('0xff7f0000', i32(32767));
     i32_decode('0xffffffff', i32(-1));
-    i32_decode('0x80ffffff', i32(-128));
-    i32_decode('0x0080ffff', i32(-32768));
+    i32_decode('0x80ffffff', i32.fromJson(-128));
+    i32_decode('0x0080ffff', i32.fromJson(-32768));
     i32_decode('0x00000080', i32(-2147483648));
   });
 
@@ -221,8 +223,8 @@ void main() {
     u64_decode('0x6400000000000000', u64(100));
     u64_decode('0x0001000000000000', u64(256));
     u64_decode('0xe803000000000000', u64(1000));
-    u64_decode('0xffffffff00000000', u64(4294967295));
-    u64_decode('0xffffffffffffffff', u64('18446744073709551615'));
+    u64_decode('0xffffffff00000000', u64.fromJson(4294967295));
+    u64_decode('0xffffffffffffffff', u64.fromJson('18446744073709551615'));
   });
 
   test('test encode i64', () {
@@ -251,8 +253,72 @@ void main() {
     i64_decode('0x0001000000000000', i64(256));
     i64_decode('0xe803000000000000', i64(1000));
     i64_decode('0xffffffffffffffff', i64(-1));
-    i64_decode('0xffffffffffffff7f', i64('9223372036854775807'));
+    i64_decode('0xffffffffffffff7f', i64.fromJson('9223372036854775807'));
     i64_decode('0x0000000000000080', i64('-9223372036854775808'));
+  });
+
+  test('test encode u128', () {
+    expect(encode(u128(0)), '0x00000000000000000000000000000000');
+    expect(encode(u128(100)), '0x64000000000000000000000000000000');
+    expect(encode(u128(256)), '0x00010000000000000000000000000000');
+    expect(encode(u128(1000)), '0xe8030000000000000000000000000000');
+    expect(encode(u128(4294967295)), '0xffffffff000000000000000000000000');
+    expect(encode(u128('18446744073709551615')), '0xffffffffffffffff0000000000000000');
+    expect(encode(u128(BigInt.parse('340282366920938463463374607431768211455'))), '0xffffffffffffffffffffffffffffffff');
+  });
+
+  test('test encode u128 overflow', () {
+    expect(() => encode(u128('340282366920938463463374607431768211456')), throwsException);
+    expect(() => encode(u128(-1)), throwsException);
+  });
+
+  test('test decode u128', () {
+    var u128_decode = (String hexInput, u128 expectVal) {
+      var v = decode(hexInput, 'u128');
+      expect(v.runtimeType, u128);
+      expect((v as u128).val, expectVal.val);
+    };
+    u128_decode('0x00000000000000000000000000000000', u128(0));
+    u128_decode('0x64000000000000000000000000000000', u128(100));
+    u128_decode('0x00010000000000000000000000000000', u128(256));
+    u128_decode('0xe8030000000000000000000000000000', u128.fromJson(1000));
+    u128_decode('0xffffffffffffffff0000000000000000', u128.fromJson('18446744073709551615'));
+    u128_decode('0xffffffffffffffffffffffffffffffff', u128('340282366920938463463374607431768211455'));
+  });
+
+  test('test encode i128', () {
+    expect(encode(i128(0)), '0x00000000000000000000000000000000');
+    expect(encode(i128(100)), '0x64000000000000000000000000000000');
+    expect(encode(i128(256)), '0x00010000000000000000000000000000');
+    expect(encode(i128(1000)), '0xe8030000000000000000000000000000');
+    expect(encode(i128(4294967295)), '0xffffffff000000000000000000000000');
+    expect(encode(i128('170141183460469231731687303715884105727')), '0xffffffffffffffffffffffffffffff7f');
+    expect(encode(i128('123456789123456789123456789')), '0x155f047c9fb1e3f2fd1e660000000000');
+    expect(encode(i128(-1)), '0xffffffffffffffffffffffffffffffff');
+    expect(encode(i128('-123456789123456789123456789')), '0xeba0fb83604e1c0d02e199ffffffffff');
+    expect(encode(i128('-170141183460469231731687303715884105728')), '0x00000000000000000000000000000080');
+  });
+
+  test('test encode i128 overflow', () {
+    expect(() => encode(i128('170141183460469231731687303715884105728')), throwsException);
+    expect(() => encode(i128('-170141183460469231731687303715884105729')), throwsException);
+  });
+
+  test('test decode i128', () {
+    var i128_decode = (String hexInput, i128 expectVal) {
+      var v = decode(hexInput, 'i128');
+      expect(v.runtimeType, i128);
+      expect((v as i128).val, expectVal.val);
+    };
+    i128_decode('0x00000000000000000000000000000000', i128(0));
+    i128_decode('0x64000000000000000000000000000000', i128(100));
+    i128_decode('0x00010000000000000000000000000000', i128(256));
+    i128_decode('0xe8030000000000000000000000000000', i128(1000));
+    i128_decode('0x155f047c9fb1e3f2fd1e660000000000', i128('123456789123456789123456789'));
+    i128_decode('ffffffffffffffffffffffffffffff7f', i128.fromJson('170141183460469231731687303715884105727'));
+    i128_decode('0xffffffffffffffffffffffffffffffff', i128.fromJson(-1));
+    i128_decode('0xeba0fb83604e1c0d02e199ffffffffff', i128('-123456789123456789123456789'));
+    i128_decode('00000000000000000000000000000080', i128('-170141183460469231731687303715884105728'));
   });
 
   test('test encode u256', () {
@@ -262,7 +328,7 @@ void main() {
     expect(encode(u256(1000)), '0xe803000000000000000000000000000000000000000000000000000000000000');
     expect(encode(u256(4294967295)), '0xffffffff00000000000000000000000000000000000000000000000000000000');
     expect(encode(u256('18446744073709551615')), '0xffffffffffffffff000000000000000000000000000000000000000000000000');
-    expect(encode(u256('115792089237316195423570985008687907853269984665640564039457584007913129639935')), '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+    expect(encode(u256(BigInt.parse('115792089237316195423570985008687907853269984665640564039457584007913129639935'))), '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
   });
 
   test('test encode u256 overflow', () {
@@ -279,8 +345,8 @@ void main() {
     u256_decode('0x0000000000000000000000000000000000000000000000000000000000000000', u256(0));
     u256_decode('0x6400000000000000000000000000000000000000000000000000000000000000', u256(100));
     u256_decode('0x0001000000000000000000000000000000000000000000000000000000000000', u256(256));
-    u256_decode('0xe803000000000000000000000000000000000000000000000000000000000000', u256(1000));
-    u256_decode('0xffffffffffffffff000000000000000000000000000000000000000000000000', u256('18446744073709551615'));
+    u256_decode('0xe803000000000000000000000000000000000000000000000000000000000000', u256.fromJson(1000));
+    u256_decode('0xffffffffffffffff000000000000000000000000000000000000000000000000', u256.fromJson('18446744073709551615'));
     u256_decode('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', u256('115792089237316195423570985008687907853269984665640564039457584007913129639935'));
   });
 
@@ -312,10 +378,23 @@ void main() {
     i256_decode('0x0001000000000000000000000000000000000000000000000000000000000000', i256(256));
     i256_decode('0xe803000000000000000000000000000000000000000000000000000000000000', i256(1000));
     i256_decode('0xffffffff00000000000000000000000000000000000000000000000000000000', i256(4294967295));
-    i256_decode('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', i256('57896044618658097711785492504343953926634992332820282019728792003956564819967'));
-    i256_decode('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', i256(-1));
+    i256_decode('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', i256.fromJson('57896044618658097711785492504343953926634992332820282019728792003956564819967'));
+    i256_decode('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', i256.fromJson(-1));
     i256_decode('0xeba0fb83604e1c0d02e199ffffffffffffffffffffffffffffffffffffffffff', i256('-123456789123456789123456789'));
     i256_decode('0x0000000000000000000000000000000000000000000000000000000000000080', i256('-57896044618658097711785492504343953926634992332820282019728792003956564819968'));
+  });
+
+  test('test conversion between string and int', () {
+    expect(i32(123456).toString(), '123456');
+    expect(i32(0).toString(), '0');
+    expect(i128(-1234567891233456789).toString(), '-1234567891233456789');
+    expect(i64('-1234567891233456789').toString(), '-1234567891233456789');
+    expect(i256(BigInt.parse('-57896044618658097711785492504343953926634992332820282019728792003956564819968')).toString(), '-57896044618658097711785492504343953926634992332820282019728792003956564819968');
+  });
+
+  test('test invalid integer value', () {
+    expect(() => i32('0xzzz'), throwsException);
+    expect(() => i32([1,2,3]), throwsException);
   });
 
   test('test decode Option<Bool>', () {
@@ -335,6 +414,8 @@ void main() {
     expect((obj3 as Option).presents.val, true);
     expect((obj3 as Option).obj.runtimeType, Bool);
     expect(((obj3 as Option).obj as Bool).val, false);
+
+    expect(() => decode('03', 'Option<Bool>'), throwsException);
   });
 
   test('test encode Option<Bool>', () {
@@ -353,5 +434,135 @@ void main() {
     expect((obj as Option).presents.val, true);
     expect((obj as Option).obj.runtimeType, i32);
     expect(((obj as Option).obj as i32).val, -32768);
+    expect((obj as Option).data.runtimeType, i32);
+  });
+
+  test('test encode H160', () {
+    expect(
+      encode(H160.fromJson('0102030405060708090a0b0c0d0e0f1011121314')),
+      '0x0102030405060708090a0b0c0d0e0f1011121314');
+  });
+
+  test('test decode H160', () {
+    var obj = decode('0x0102030405060708090a0b0c0d0e0f1011121314', 'H160');
+    expect(obj.runtimeType, H160);
+    expect(obj.toJson(), '0x0102030405060708090a0b0c0d0e0f1011121314');
+  });
+
+  test('test encode H256', () {
+    expect(
+      encode(H256.fromJson('0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00')),
+      '0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00');
+  });
+
+  test('test decode H256', () {
+    var obj = decode('0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00', 'H256');
+    expect(obj.runtimeType, H256);
+    expect(obj.toJson(), '0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00');
+  });
+
+    test('test encode H512', () {
+    expect(
+      encode(H512.fromJson('0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f002122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f00')),
+      '0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f002122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f00');
+  });
+
+  test('test decode H512', () {
+    var obj = decode('0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f002122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f00', 'H512');
+    expect(obj.runtimeType, H512);
+    expect(obj.toJson(), '0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f002122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f00');
+  });
+
+  test('test encode fixed length array', () {
+    expect(encode(FixedLengthArr.fromJson(0, 'u32', [])), '0x');
+    expect(encode(FixedLengthArr.fromJson(1, 'u32', [100])), '0x64000000');
+    expect(encode(FixedLengthArr.fromJson(5, 'u32', [100, 0, 256, 1000, 4294967295])), '0x640000000000000000010000e8030000ffffffff');
+    expect(() => FixedLengthArr.fromJson(3, 'u32', [1,2]), throwsException);
+  });
+
+  test('test decode fixed length array', () {
+    var obj1 = decode('0x640000000000000000010000e8030000ffffffff', '[u32; 5]');
+    expect(obj1.runtimeType, FixedLengthArr);
+    expect((obj1 as FixedLengthArr).values.length, 5);
+    expect((obj1 as FixedLengthArr).values[0].runtimeType, u32);
+    expect(((obj1 as FixedLengthArr).values[0] as u32).val, 100);
+
+    var obj2 = decode('0x', '[u32; 0]');
+    expect(obj2.runtimeType, FixedLengthArr);
+    expect((obj2 as FixedLengthArr).values.length, 0);
+
+    var obj3 = fromJson('[u32; 5]', [100, 0, 256, 1000, 4294967295]);
+    expect(obj3.runtimeType, FixedLengthArr);
+    expect((obj3 as FixedLengthArr).values.length, 5);
+    expect((obj3 as FixedLengthArr).values[0].runtimeType, u32);
+    expect(((obj3 as FixedLengthArr).values[0] as u32).val, 100);
+
+    expect((obj3.toJson()[2] as u32).val, 256);
+  });
+
+  test('test anonymous structure decode/encode', () {
+    var obj1 = decode('0x0102', '(u8,u8)') as AnonymousStruct;
+    expect(obj1.data.length, 2);
+    expect(obj1.data[0] is u8, true);
+    expect(obj1.data[1] is u8, true);
+    expect((obj1.data[0] as u8).val, 1);
+    expect((obj1.data[1] as u8).val, 2);
+    expect(encode(obj1), '0x0102');
+  
+    var obj2 = decode('0x0102030405060708090a0b0c0d0e0f1011121314fffdff', '(H160,u8,Compact<u32>)') as AnonymousStruct;
+    expect(obj2.data.length, 3);
+    expect(obj2.data[0] is H160, true);
+    expect(obj2.data[1] is u8, true);
+    expect(obj2.data[2] is Compact, true);
+    expect((obj2.data[0] as H160).toJson(), '0x0102030405060708090a0b0c0d0e0f1011121314');
+    expect((obj2.data[1] as u8).val, 255);
+    var compacted = (obj2.data[2] as Compact).obj;
+    expect(compacted is u32, true);
+    expect((compacted as u32).val, 0x3fff);
+    expect(encode(obj2), '0x0102030405060708090a0b0c0d0e0f1011121314fffdff');
+
+    var obj3 = fromJson('(H512,Option<Bool>,i64)', 
+      ['0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f002122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f00',
+       true,
+       '9223372036854775807']) as AnonymousStruct;
+    expect(obj3.data.length, 3);
+    expect((obj3.data[0] as H512).toJson(), '0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f002122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f00');
+    expect(((obj3.data[1] as Option).obj as Bool).val, true);
+    expect((obj3.data[2] as i64).val, 9223372036854775807);
+
+    expect(
+      jsonDecode(jsonEncode(obj3)),
+      [
+        '0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f002122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f00',
+        true,
+        9223372036854775807
+      ]);
+  });
+
+  test('test encode Vec', () {
+    var obj1 = fromJson('Vec<u64>', [100, 200, '9223372036854775807', '18446744073709551615', 12345]);
+    expect(encode(obj1), '0x146400000000000000c800000000000000ffffffffffffff7fffffffffffffffff3930000000000000');
+
+    var obj2 = fromJson('Vec<Compact<u32>>', [0,5,6,0x40,130,0x4def,1000000]);
+    expect(encode(obj2), '0x1c00141801010902be37010002093d00');
+
+    (obj2 as Vec)[2] = Compact(u32(0x4000));
+    expect(encode(obj2), '0x1c00140200010001010902be37010002093d00');
+
+    var obj3 = Vec([i32(10), i32(100), i32(1000), i32(10000), i32(10000000)]);
+    expect(encode(obj3), '0x140a00000064000000e80300001027000080969800');
+  });
+
+  test('test decode Vec', () {
+    var obj1 = decode('0x146400000000000000c800000000000000ffffffffffffff7fffffffffffffffff3930000000000000', 'Vec<u64>') as Vec;
+    expect(obj1.objects.length, 5);
+    expect(obj1[2].toString(), '9223372036854775807');
+    expect(obj1[4].toString(), '12345');
+
+    var obj2 = decode('0x1c00141801010902be37010002093d00', 'Vec<Compact<u32>>') as Vec;
+    expect(obj2.objects.length, 7);
+    expect(obj2[0] is Compact, true);
+    expect(((obj2[0] as Compact).obj as u32).toString(), '0');
+    expect(((obj2[5] as Compact).obj as u32).toString(), '19951');
   });
 }

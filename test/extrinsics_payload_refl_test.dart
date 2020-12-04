@@ -1,4 +1,4 @@
-library scalecodec_test.extrinsics_tests;
+library scalecodec_test.extrinsics_payload_refl_test;
 
 import 'package:convert/convert.dart';
 import 'package:scalecodec/scalecodec.dart';

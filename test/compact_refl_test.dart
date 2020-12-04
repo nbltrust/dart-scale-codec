@@ -1,4 +1,4 @@
-library scalecodec_test.compact_tests;
+library scalecodec_test.compact_refl_test;
 
 import 'package:convert/convert.dart';
 import 'package:scalecodec/scalecodec.dart';

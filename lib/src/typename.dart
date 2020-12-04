@@ -5,12 +5,26 @@ part of 'types.dart';
 /// When given a typename as map key, system will actually take the
 /// corresponding value as actual type
 Map<String, String> _typeDefines = {
+  'AccountId': 'H256',
+  'GenericAccountId': 'H256',
+  'EraIndex': 'u32',
   'PlainType': 'Str',
   'Hash': 'H256',
+  'BlakeTwo256': 'H256',
+  'Sha256': 'H256',
+  'Keccak256': 'H256',
+  'ShaThree256': 'H256',
   'Signature': 'H512',
   '<T::Lookup as StaticLookup>::Source': 'Address',
   'Balance': 'u128',
-  'Header': 'u128'
+  'Header': 'u128',
+  'Moment': 'u64',
+  'BalanceOf': 'u128',
+  'BalanceOf<T>': 'u128',
+  'Call': 'GenericCall',
+  "OpaqueTimeSlot": "Bytes",
+  "AuthoritySignature": "H512",
+  "<AuthorityId as RuntimeAppPublic>::Signature": "H512",
 };
 
 /// Split string of subtype definition into list of subtypes
@@ -49,6 +63,8 @@ Tuple2<String, dynamic> processTypeName(String typeName) {
   if(typeName.startsWith('T::')) {
     typeName = typeName.substring(3);
   }
+
+  typeName = typeName.replaceFirst('<T as Trait>::', '');
 
   if(typeName.length == 0) {
     throw Exception("empty typeName not supported");

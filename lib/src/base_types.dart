@@ -88,13 +88,13 @@ ScaleCodecBase fromJson(String typeName, dynamic val) {
   var typeRes = processTypeName(typeName);
   switch (typeRes.item1) {
     case 'AnonymousStruct':
-      if(val.runtimeType != List)
+      if(!(val is List))
         throw Exception("Incompatibal input type ${val.runtimeType} for anonymous struct");
       var subTypeArr = typeRes.item2 as List<String>;
       return AnonymousStruct.fromJson(subTypeArr, val);
     case 'FixedLengthArr':
       var res = typeRes.item2 as Tuple2<int, String>;
-      if(val.runtimeType != List)
+      if(!(val is List))
         throw Exception("Incompatibal input type ${val.runtimeType} for fixed length arr");
       return FixedLengthArr.fromJson(res.item1, res.item2, val as List<dynamic>);
     case 'Template':
@@ -432,10 +432,9 @@ class FixedLengthArr extends ScaleCodecBase {
 class AnonymousStruct extends ScaleCodecBase {
   List<ScaleCodecBase> data;
   AnonymousStruct.fromBinary(List<String> subtypes) {
-    for(var s in subtypes) {
-      data.add(fromBinary(s));
-    }
+    data = List<ScaleCodecBase>.from(subtypes.map((s) => fromBinary(s)));
   }
+
   void objToBinary() {
     data.forEach((d) {
       d.objToBinary();
@@ -445,10 +444,13 @@ class AnonymousStruct extends ScaleCodecBase {
   AnonymousStruct.fromJson(List<String> subtypes, List<dynamic> val) {
     if(subtypes.length != val.length)
       throw Exception("Incompatibal input length for anonymous struct");
+    data = [];
     for(var i = 0; i < subtypes.length; i++) {
       data.add(fromJson(subtypes[i], val[i]));
     }
   }
+
+  List<ScaleCodecBase> toJson() => data;
 }
 
 abstract class GeneralStruct extends ScaleCodecBase {
@@ -720,6 +722,111 @@ class Option extends GeneralTemplate {
   dynamic toJson() => presents.val ? obj.toJson() : null;
   
   ScaleCodecBase get data => presents.val ? obj : null;
+}
+
+class Null extends ScaleCodecBase {
+  Null.fromBinary() {}
+  void objToBinary() {}
+  Null.fromJson(dynamic v) {
+    if(v != null) {
+      throw Exception("Null only accepts null value");
+    }
+  }
+  Map<String, dynamic> toJson() => null;
+}
+
+class Data extends ScaleCodecBase {
+  u8 index;
+  dynamic data;
+  static const List<String> enumTypes = [
+    'BlakeTwo256', 'Sha256', 'Keccak256', 'ShaThree256'];
+  Data.fromBinary() {
+    index = fromBinary('u8');
+    if(index.val == 0) {
+      return;
+    }
+
+    if(index.val >= 1 && index.val <= 33) {
+      data = getReaderInstance().read(index.val - 1);
+      return;
+    }
+
+    if(index.val >= 34 && index.val <= 37) {
+      data = fromBinary(enumTypes[index.val - 34]);
+      return;
+    }
+
+    throw Exception('Invalid index for Data type');
+  }
+
+  void objToBinary() {
+    index.objToBinary();
+    if(index.val == 0) {
+      return;
+    }
+
+    if(index.val >= 1 && index.val <= 33) {
+      getWriterInstance().write(data as Uint8List);
+      return;
+    }
+
+    if(index.val >= 34 && index.val <= 37) {
+      data.objToBinary();
+      return;
+    }
+  }
+
+  Data.fromJson(Map<String, dynamic> json) {
+    if(json.length != 1) {
+      throw Exception("invalid input json for Data type");
+    }
+
+    var key = json.keys.first;
+    var value = json[key];
+
+    if(key == 'None') {
+      index = u8(0);
+      return;
+    }
+
+    if(key == 'Raw') {
+      var s = value as String;
+      if(s.startsWith('0x')) {
+        s = s.substring(2);
+      }
+      data = hex.decode(s);
+      if(data.length > 32) {
+        throw Exception("invalid Raw data length for Data type");
+      }
+      index = u8(data.length + 1);
+      return;
+    }
+
+    var idx = enumTypes.indexOf(key) + 34;
+    if(idx >= 34 && idx <= 37) {
+      index = u8(idx);
+      data = fromBinary(key);
+      return;
+    }
+
+    throw Exception("Invalid type for Data type");
+  }
+
+  Map<String, dynamic> toJson() {
+    if(index.val == 0) {
+      return {'None': null};
+    }
+
+    if(index.val >= 1 && index.val <= 33) {
+      return {'Raw': '0x' + hex.encode(data)};
+    }
+
+    if(index.val >= 34 && index.val <= 37) {
+      return {enumTypes[index.val - 34]: data};
+    }
+
+    throw Exception("Invalid index for Data type");
+  }
 }
 
 class UserDefined extends ScaleCodecBase {

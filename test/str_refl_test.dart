@@ -1,4 +1,4 @@
-library scalecodec_test.compact_tests;
+library scalecodec_test.str_refl_test;
 
 import 'package:convert/convert.dart';
 import 'package:scalecodec/scalecodec.dart';
@@ -15,7 +15,7 @@ String encode(String input) {
 String decode(String encoded) {
   createReaderInstance(encoded);
   var s = fromBinary('Str');
-  return (s as Str).val;
+  return (s as Str).toString();
 }
 void main() {
   initializeReflectable();

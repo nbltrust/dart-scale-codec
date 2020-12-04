@@ -123,7 +123,6 @@ class ExtrinsicsPayloadValue extends GeneralStruct {
 }
 
 class Extrinsics extends ScaleCodecBase {
-  u8 versionInfo;
   bool containsTransaction;
   Address accountId;
   u8 signatureVersion;
@@ -138,7 +137,6 @@ class Extrinsics extends ScaleCodecBase {
       // contains transaction
         return Extrinsics(
           GenericCall.fromJson(json['call']),
-          u8.fromJson(json['versionInfo']),
           true,
           Address.fromJson(json['accountId']),
           u8.fromJson(json['signatureVersion']),
@@ -149,13 +147,27 @@ class Extrinsics extends ScaleCodecBase {
         );
     } else {
       return Extrinsics(
-        GenericCall.fromJson(json['call']),
-        u8.fromJson(json['versionInfo']),
-        false);
+        GenericCall.fromJson(json['call']), false);
     }
   }
 
-  Extrinsics(this.call, this.versionInfo, this.containsTransaction, [
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> ret = {};
+    ret['call'] = call;
+
+    if(containsTransaction) {
+      ret['accountId'] = accountId;
+      ret['signatureVersion'] = signatureVersion;
+      ret['signature'] = signature;
+      ret['era'] = era;
+      ret['nonce'] = nonce;
+      ret['tip'] = tip;
+    }
+
+    return ret;
+  }
+
+  Extrinsics(this.call, this.containsTransaction, [
     this.accountId,
     this.signatureVersion,
     this.signature,
@@ -163,6 +175,19 @@ class Extrinsics extends ScaleCodecBase {
     this.nonce,
     this.tip,
   ]);
+
+  Extrinsics.fromBinary() {
+    containsTransaction = (fromBinary('u8') as u8).val == 0x84;
+    if(containsTransaction) {
+      accountId = fromBinary('Address');
+      signatureVersion = fromBinary('u8');
+      signature = fromBinary('H512');
+      era = fromBinary('Era');
+      nonce = fromBinary('Compact<u64>');
+      tip = fromBinary('Compact<Balance>');
+    }
+    call = fromBinary('GenericCall');
+  }
 
   void objToBinary() {
     var writer = getWriterInstance();

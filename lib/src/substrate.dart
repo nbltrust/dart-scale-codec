@@ -129,8 +129,35 @@ class Era extends  ScaleCodecBase {
       int period = s['period'] as int;
       int phase = s['phase'] as int;
       int factor = max(1, period >> 12);
-      firstByte = min(15, max(1, trailing_zeros(period) - 1));
-      secondByte = (phase ~/ factor) << 4;
+      var packed = min(15, max(1, trailing_zeros(period) - 1)) | (phase ~/ factor) << 4;
+      secondByte = packed >> 8;
+      firstByte = packed & 0xff;
     }
   }
+}
+
+class IdentityInfoAdditional extends GeneralStruct {
+  static const List<Tuple2<String, String>> fields = [
+    Tuple2('field', 'Data'),
+    Tuple2('value', 'Data')
+  ];
+
+  IdentityInfoAdditional.fromBinary():super.fromBinary();
+  IdentityInfoAdditional.fromJson(Map<String, dynamic> s):super.fromJson(s);
+}
+
+class IdentityInfo extends GeneralStruct {
+  static const List<Tuple2<String, String>> fields = [
+    Tuple2('additional', 'Vec<IdentityInfoAdditional>'),
+    Tuple2('display', 'Data'),
+    Tuple2('legal', 'Data'),
+    Tuple2('web', 'Data'),
+    Tuple2('riot', 'Data'),
+    Tuple2('email', 'Data'),
+    Tuple2('pgpFingerprint', 'Option<H160>'),
+    Tuple2('image', 'Data'),
+    Tuple2('twitter', 'Data')
+  ];
+  IdentityInfo.fromBinary():super.fromBinary();
+  IdentityInfo.fromJson(Map<String, dynamic> s):super.fromJson(s);
 }

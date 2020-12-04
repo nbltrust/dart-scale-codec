@@ -1,4 +1,4 @@
-library scalecodec_test.generic_call_tests;
+library scalecodec_test.generic_call_refl_test;
 
 import 'dart:convert';
 
@@ -14,10 +14,35 @@ void main() {
   createReaderInstance(call_hex_str);
   dynamic call = fromBinary('GenericCall');
   // print(jsonEncode(call));
-  test('Generic call v11 decode', () {
+  test('Generic call v12 decode', () {
     expect(call.runtimeType, GenericCall);
     var c = call as GenericCall;
     expect((c.module.name as Str).val, 'Balances');
     expect(c.function_name.val, 'transfer');
+    expect(jsonDecode(jsonEncode(c)), {
+      'module': 'Balances',
+      'function': 'transfer',
+      'args': {
+        'dest':'14HSB7tpJf17F1XXzC1GUiPH6c6g9UvTkKC4w4edX8vKte84','value':'10000000000'
+      }
+    });
+  });
+
+  test('Generic call error test', () {
+    expect(() => GenericCall.fromJson({
+      'module': 'InvalidModuleName',
+      'function': 'transfer',
+      'args': {
+        'dest':'14HSB7tpJf17F1XXzC1GUiPH6c6g9UvTkKC4w4edX8vKte84','value':'10000000000'
+      }
+    }), throwsException);
+    
+    expect(() => GenericCall.fromJson({
+      'module': 'Balances',
+      'function': 'invalidfunction',
+      'args': {
+        'dest':'14HSB7tpJf17F1XXzC1GUiPH6c6g9UvTkKC4w4edX8vKte84','value':'10000000000'
+      }
+    }), throwsException);
   });
 }

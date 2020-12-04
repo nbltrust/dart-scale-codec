@@ -3,7 +3,7 @@ description:
   Scalecodec library in native dart. Support convertion between object, binary and json.
   Can be used to encode/decode metadata, extrinsics and other substrate related types.
 
-version: 0.1.1
+version: 0.1.2
 repository: https://github.com/nbltrust/dart-scale-codec
 
 dependencies:
@@ -15,6 +15,7 @@ dependencies:
   cryptography: ^1.4.1
 
 dev_dependencies:
+  test_coverage: ^0.4.2
   build_runner: any
   test: any
 

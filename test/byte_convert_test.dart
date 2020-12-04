@@ -1,4 +1,4 @@
-library scalecodec_test.compact_tests;
+library scalecodec_test.byte_convert_test;
 
 import 'dart:typed_data';
 

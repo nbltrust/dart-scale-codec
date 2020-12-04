@@ -3,12 +3,12 @@ library scalecodec_demo.decode_extrinsics_demo;
 import 'dart:convert';
 import 'package:scalecodec/scalecodec.dart';
 
-import 'decode_extrinsics_demo.reflectable.dart';
+import 'decode_extrinsics_payload_demo.reflectable.dart';
 import 'runtime.dart';
 
-Extrinsics decodeExtrinsics(String callHexStr) {
+ExtrinsicsPayloadValue decodeExtrinsics(String callHexStr) {
   createReaderInstance(callHexStr);
-  return fromBinary('Extrinsics');
+  return fromBinary('ExtrinsicsPayloadValue');
 }
 
 void main() async {
